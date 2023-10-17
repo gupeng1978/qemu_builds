@@ -1,3 +1,6 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = https://gitee.com/mirrors/buildroot.git
+[submodule "intellif/source/linux"]
+	path = intellif/source/linux
+	url = https://gitee.com/mirrors/Linux.git
