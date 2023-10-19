@@ -13,8 +13,9 @@ fi
 # Search for "# qemu_*_defconfig" tag in all readme.txt files.
 # Qemu command line on multilines using back slash are accepted.
 QEMU_CMD_LINE=$(sed -r ':a; /\\$/N; s/\\\n//; s/\t/ /; ta; /# '${DEFCONFIG_NAME}'$/!d; s/#.*//' ${README_FILES})
+echo "DEFCONFIG_NAME=${DEFCONFIG_NAME}"
 
-
+echo "QEMU_CMD_LINE=${QEMU_CMD_LINE}"
 
 if [ -z "${QEMU_CMD_LINE}" ]; then
     # No Qemu cmd line found, can't test.

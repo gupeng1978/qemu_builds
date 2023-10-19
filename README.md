@@ -26,3 +26,11 @@ base_img.builds(...)
 
 python包：
 aiohttp
+
+
+linux配置文件放在用户intellif自己的目录下，通过BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE配置，比linux内核自带BR2_LINUX_KERNEL_DEFCONFIG的配置文件更加灵活。
+同理，对于设备树也是如此。
+
+buildroot的linux.mk文件很复杂，而且内部也有不少package 依赖linux ，移植到外部定制custom_linux.mk文件不可行。
+
+linux.mk文件不支持源码build，只能通过TAR包，GIT等方式下载。

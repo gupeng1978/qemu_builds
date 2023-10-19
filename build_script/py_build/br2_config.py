@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import fnmatch
 import re
@@ -17,7 +18,7 @@ def br2_config_gen(config_file, output_platform):
 
     # Use subprocess to execute the command
     cmd = f"make BR2_EXTERNAL={BR2_EXTERNAL_DIR} O={output_full_dir} {config_file}"
-    ret = subprocess.check_output(cmd, shell=True, cwd=BUILDROOT_DIR)
+    ret = subprocess.run(cmd, shell=True, check=True, text=True, cwd=BUILDROOT_DIR, stdout=sys.stdout, stderr=sys.stderr)
     print(ret)
 
 
