@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import multiprocessing
 from .vars import TOP_DIR, OUTPUT_DIR,BR2_EXTERNAL_DIR, BUILDROOT_DIR
@@ -16,10 +17,11 @@ def br2_build(output_platform):
     # Use subprocess to execute the command
     cmd = f"make O={output_full_dir} -j{MAX_JOBS}"
     try:
-        ret = subprocess.check_output(cmd, shell=True, cwd=BUILDROOT_DIR)
+        ret = subprocess.run(cmd, shell=True, check=True, text=True, cwd=BUILDROOT_DIR, stdout=sys.stdout, stderr=sys.stderr)
         return os.path.join(output_full_dir, 'images')
     except subprocess.CalledProcessError as e:
-        print(f'buildroot make failed，ret_code: {e.returncode}, output = {e.output}')
-    
+        print(f'buildroot make failed, ret_code: {e.returncode}')
+
     return None
+
 
