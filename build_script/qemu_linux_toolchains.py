@@ -5,10 +5,14 @@ br2_config = "qemu_intellif_defconfig"
 platform = "qemu_aarch64_linux_toolchains"
 
 
+linux_rebuild = False
 
 # 根据配置文件生成构建
 py_build.br2_config_gen(br2_config, platform)
-py_build.br2_linux_kernel_prebuild(platform)
+
+py_build.br2_package_clean(platform, "app_opencv_demo_0")
+if linux_rebuild:
+    py_build.br2_linux_kernel_prebuild(platform)
 output_img_dir = py_build.br2_build(platform)
 print(output_img_dir)
 

@@ -34,3 +34,18 @@ linux配置文件放在用户intellif自己的目录下，通过BR2_LINUX_KERNEL
 buildroot的linux.mk文件很复杂，而且内部也有不少package 依赖linux ，移植到外部定制custom_linux.mk文件不可行。
 
 linux.mk文件不支持源码build，只能通过TAR包，GIT等方式下载。
+对于自定义的package，是支持local源码编译的，参考app_opencv_demo_o.mk写法；
+app_opencv_demo_0的编译，需要删除build再编译。
+步骤：
+1. Syncing from source dir：拷贝到build目录
+2. Configuring: 调用cmake生成makefile
+3. Building
+4. Installing to target
+
+make O=/home/gupeng/github/qemu_builds/output/qemu_aarch64_linux_toolchains app_opencv_demo_0-rebuild, 重新编译单个pkg；
+make O=/home/gupeng/github/qemu_builds/output/qemu_aarch64_linux_toolchains app_opencv_demo_0-dirclean
+
+
+在 config.in 文件中添加 depends on BR2_PACKAGE_OPENCV4 是为了确保配置阶段的依赖关系，而在 *.mk 文件中添加 APP_OPENCV_DEMO_0_DEPENDENCIES = opencv4 是为了确保构建阶段的依赖关系。这两个步骤通常都是必需的，以确保 APP_OPENCV_DEMO_0 仅在 opencv4 可用时才被构建
+
+必须使用menuconfig解决配置依赖关系。

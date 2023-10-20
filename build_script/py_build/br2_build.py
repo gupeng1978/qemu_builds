@@ -39,3 +39,16 @@ def br2_linux_kernel_prebuild(output_platform):
     tar = create_git_repo_tar(LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR)
     print(tar)
     pass
+
+
+def br2_package_clean(output_platform, pkt):
+    output_full_dir = os.path.join(OUTPUT_DIR, output_platform)    
+    # Use subprocess to execute the command
+    cmd = f"make O={output_full_dir} {pkt}-dirclean"
+    try:
+        ret = subprocess.run(cmd, shell=True, check=True, text=True, cwd=BUILDROOT_DIR, stdout=sys.stdout, stderr=sys.stderr)
+    except subprocess.CalledProcessError as e:
+        print(f'buildroot clean pkt {pkt} failed, ret_code: {e.returncode}')
+
+    
+    
