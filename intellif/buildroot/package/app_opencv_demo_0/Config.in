@@ -1,5 +1,6 @@
 config BR2_PACKAGE_APP_OPENCV_DEMO_0
     bool "APP_OPENCV_DEMO_0"
     depends on BR2_PACKAGE_OPENCV4
+    depends on BR2_PACKAGE_OPENCV4_LIB_IMGPROC
     help
         APP_OPENCV_DEMO_0 is an demo package for use opencv.

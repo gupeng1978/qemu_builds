@@ -8,7 +8,7 @@ int main() {
 
     // 将图像缩放到400x400
     cv::Mat resized_image;
-    // cv::resize(random_image, resized_image, cv::Size(400, 400));
+    cv::resize(random_image, resized_image, cv::Size(400, 400));
 
     std::cout << "opencv resize: random_image =  " << random_image.size() << std::endl;
 

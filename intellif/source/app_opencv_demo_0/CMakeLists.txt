@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCV REQUIRED)
 
+
 add_executable(app_opencv_demo_0 main.cpp)
 
 
