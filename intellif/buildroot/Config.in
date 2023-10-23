@@ -1,1 +1,2 @@
-source "$BR2_EXTERNAL_INTELLIF_PATH/package/app_opencv_demo_0/Config.in"
+source "$BR2_EXTERNAL_INTELLIF_PATH/package/app_opencv_resize/Config.in"
+source "$BR2_EXTERNAL_INTELLIF_PATH/package/app_hello_world/Config.in"

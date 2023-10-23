@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+project(app_hello_world)
+set(CMAKE_CXX_STANDARD 11)
+add_executable(app_hello_world main.cpp)
+install(TARGETS app_hello_world DESTINATION bin)

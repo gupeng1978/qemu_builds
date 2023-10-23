@@ -49,3 +49,8 @@ make O=/home/gupeng/github/qemu_builds/output/qemu_aarch64_linux_toolchains app_
 在 config.in 文件中添加 depends on BR2_PACKAGE_OPENCV4 是为了确保配置阶段的依赖关系，而在 *.mk 文件中添加 APP_OPENCV_DEMO_0_DEPENDENCIES = opencv4 是为了确保构建阶段的依赖关系。这两个步骤通常都是必需的，以确保 APP_OPENCV_DEMO_0 仅在 opencv4 可用时才被构建
 
 必须使用menuconfig解决配置依赖关系。
+
+
+增加Configure异常检测机制；
+1. 如果写错配置名称，那么会检测到错误；
+2. 如果配置中库依赖关系不满足，那么会检测到错误, 比如BR2_PACKAGE_APP_OPENCV_DEMO_0依赖BR2_PACKAGE_OPENCV4_LIB_IMGPROC库，如果未打开依赖库，那么也会报错；

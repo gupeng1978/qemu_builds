@@ -1,0 +1,10 @@
+APP_HELLO_WORLD_VERSION = 0.1
+APP_HELLO_WORLD_LICENSE = MIT
+
+
+APP_HELLO_WORLD_SITE = $(TOPDIR)/../intellif/source/app_hello_world
+APP_HELLO_WORLD_SITE_METHOD = local
+APP_HELLO_WORLD_INSTALL_STAGING = NO
+
+
+$(eval $(cmake-package))

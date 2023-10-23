@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+project(app_opencv_resize)
+set(CMAKE_CXX_STANDARD 11)
+find_package(OpenCV REQUIRED)
+add_executable(app_opencv_resize main.cpp)
+target_link_libraries(app_opencv_resize ${OpenCV_LIBS})
+install(TARGETS app_opencv_resize DESTINATION bin)
