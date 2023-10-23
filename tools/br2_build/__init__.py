@@ -19,7 +19,6 @@ if os.path.basename(TOP_DIR).split('.')[0] != "qemu_builds":
 def run_shell_cmd(cmd : str, env : dict, dir : str = BUILDROOT_DIR):    
     try:
         out = subprocess.run(cmd, shell=True, check=True, text=True, cwd=BUILDROOT_DIR, env=env, stdout=sys.stdout, stderr=sys.stderr)
-    except subprocess.CalledProcessError as e:
-        print(f'error: run_shell_cmd run {cmd} failed, ret_code = {e.returncode}')
-        return False    
-    return True
+    except subprocess.CalledProcessError as e:        
+        raise ValueError(f'error: run_shell_cmd run {cmd} failed, ret_code = {e.returncode}')
+        

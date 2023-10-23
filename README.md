@@ -54,3 +54,76 @@ make O=/home/gupeng/github/qemu_builds/output/qemu_aarch64_linux_toolchains app_
 增加Configure异常检测机制；
 1. 如果写错配置名称，那么会检测到错误；
 2. 如果配置中库依赖关系不满足，那么会检测到错误, 比如BR2_PACKAGE_APP_OPENCV_DEMO_0依赖BR2_PACKAGE_OPENCV4_LIB_IMGPROC库，如果未打开依赖库，那么也会报错；
+
+
+如何增加源码package构建流程(以hello_world package为例)：
+1. 源码扩展：在intellif/source目录里增加app_hello_world目录以及对应的源码以及CMakeLists.txt；
+2. BT2 External package扩展：在intellif/buildroot/package增加app_hello_world配置，其中配置文件见下，使用标准cmake package接入，选择local本地文件；
+```
+APP_HELLO_WORLD_VERSION = 0.1
+APP_HELLO_WORLD_LICENSE = MIT
+
+APP_HELLO_WORLD_SITE = $(TOPDIR)/../intellif/source/app_hello_world
+APP_HELLO_WORLD_SITE_METHOD = local
+APP_HELLO_WORLD_INSTALL_STAGING = NO
+
+$(eval $(cmake-package))
+```
+
+3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展：
+```
+def app_hello_world(self, enable : bool):
+    self.br2_updated_configs.append("BR2_PACKAGE_APP_HELLO_WORLD=y" if enable else "BR2_PACKAGE_APP_HELLO_WORLD=n")
+    return self
+```
+
+4. 修改脚本构建：
+```
+import sys
+sys.path.append("../tools/")
+
+from br2_build.config import Configure
+from br2_build.build import Build
+
+config = Configure("qemu_intellif_defconfig", "qemu_aarch64").\
+        app_opencv_resize(True).\
+        app_hello_world(True).\
+        update_config()
+build = Build(config)
+build.build_all()
+```
+
+5. 执行：
+1) 在output/qemu_aarch64/images下执行 sh start-qemu.sh, 启动qemu
+2) 在qemu下进入/user/bin目录，执行app_hello_world
+
+
+app_opencv_resize demo:
+1. opencv三方库依赖；
+2. 构建时参数传递;
+3. 运行时文件输入/输出；
+
+
+如何在基础配置中增加三方库？
+```
+make BR2_DEFCONFIG=/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qemu_intellif_defconfig  defconfig
+
+配置写入到 buildroot/.config
+
+
+make menuconfig
+GUI修改配置，自动解决依赖关系，保存到.config
+
+make BR2_DEFCONFIG=/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qemu_intellif_defconfig savedefconfig
+
+打开qemu_intellif_defconfig，检查三方库以及依赖库是否安装
+
+```
+
+
+验证A，Bpackage依赖下，A重编译，是否会导致依赖的B重新编译？
+
+
+
+如果在package中增加build构建参数传递？
+1. 在 Config.in 文件中，定义一个新的配置选项

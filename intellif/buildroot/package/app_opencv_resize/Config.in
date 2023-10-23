@@ -4,3 +4,10 @@ config BR2_PACKAGE_APP_OPENCV_RESIZE
     depends on BR2_PACKAGE_OPENCV4_LIB_IMGPROC
     help
         APP_OPENCV_DEMO_0 is an demo package for use opencv.
+
+
+config BR2_PACKAGE_APP_OPENCV_RESIZE_CONF_OPTS
+    string  "cmake opts for app_opencv_resize"
+    default  "-DLOG_LEVEL=LOG_LEVEL_INFO -DCMAKE_BUILD_TYPE=Debug"
+    help
+        Set cmake build opts for app_opencv_resize.
