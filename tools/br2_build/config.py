@@ -26,11 +26,8 @@ class Configure(object):
             raise ValueError(f"build_type must be one of Debug, Release")
         
         if enable:
-            cmake_conf_opts = 'BR2_PACKAGE_APP_OPENCV_RESIZE_CONF_OPTS='
-            cmake_conf_opts += f'-DCMAKE_BUILD_TYPE={build_type} '
-            cmake_conf_opts += f'-DLOG_LEVEL=LOG_LEVEL_{log_level}'
-            # cmake_conf_opts += '"'
-            self.br2_updated_configs.append(cmake_conf_opts)
+             self.br2_updated_configs.append(f'BR2_PACKAGE_APP_OPENCV_RESIZE_LOG_LEVEL="LOG_LEVEL_{log_level}"')
+             self.br2_updated_configs.append(f'BR2_PACKAGE_APP_OPENCV_RESIZE_BUILD_TYPE="{build_type}"')
             
         if clean:
             self.br2_packages_clean.append("app_opencv_resize")

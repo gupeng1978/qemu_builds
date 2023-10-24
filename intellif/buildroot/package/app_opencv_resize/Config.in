@@ -6,8 +6,17 @@ config BR2_PACKAGE_APP_OPENCV_RESIZE
         APP_OPENCV_DEMO_0 is an demo package for use opencv.
 
 
-config BR2_PACKAGE_APP_OPENCV_RESIZE_CONF_OPTS
-    string  "cmake opts for app_opencv_resize"
-    default  "-DLOG_LEVEL=LOG_LEVEL_INFO -DCMAKE_BUILD_TYPE=Debug"
+config BR2_PACKAGE_APP_OPENCV_RESIZE_LOG_LEVEL
+    string "Log level for app_opencv_resize"
+    default "LOG_LEVEL_INFO"
     help
-        Set cmake build opts for app_opencv_resize.
+        Set the log level for app_opencv_resize. Possible values are:
+        LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, etc.
+
+
+config BR2_PACKAGE_APP_OPENCV_RESIZE_BUILD_TYPE
+    string "Build type for app_opencv_resize"
+    default "Release"
+    help
+        Set the build type for app_opencv_resize. Possible values are:
+        Debug, Release.
