@@ -1,6 +1,7 @@
 
 import os
-from . import run_shell_cmd, BR2_EXTERNAL_DIR, OUTPUT_DIR
+from . import run_shell_cmd, read_buildroot_config, create_git_repo_tar
+from . import BR2_EXTERNAL_DIR, OUTPUT_DIR, LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR
 
 
 
@@ -11,6 +12,7 @@ class Configure(object):
     def __init__(self, defconfig, platform):
         self.defconfig = os.path.join(CONFIGS_DIR, defconfig)
         self.builddir = os.path.join(OUTPUT_DIR, platform)
+        self.configfile = os.path.join(self.builddir, '.config')
         self.br2_updated_configs = []
         self.br2_packages_clean = []
         self.env = {"PATH": os.environ["PATH"]}
@@ -39,17 +41,16 @@ class Configure(object):
             self.br2_packages_clean.append("app_hello_world")
         return self
     
-    def linux(self, enable):
-        return self
-    
     def update_config(self):
         if self.br2_updated_configs:
             print(f"update config: {self.br2_updated_configs}")
-            with open(os.path.join(self.builddir, '.config'), 'a') as f:
+            with open(self.configfile , 'a') as f:
                 for config in self.br2_updated_configs:
                     f.write(config + '\n')
-        run_shell_cmd(f"make O={self.builddir} olddefconfig", self.env)        
-        self.check_config_valid()
+            run_shell_cmd(f"make O={self.builddir} olddefconfig", self.env)        
+            self.check_config_valid()
+        if read_buildroot_config(self.configfile, 'BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION'):
+            create_git_repo_tar(LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR)            
         return self
     
     def check_config_valid(self):

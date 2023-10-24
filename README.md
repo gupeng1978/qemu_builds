@@ -33,7 +33,7 @@
 ## 依赖库工具安装
 ```
 udo apt update
-sudo apt-get install python-is-python3
+sudo apt-get install python-is-python3 
 sudo apt install qemu qemu-kvm libvirt-daemon libvirt-daemon-system bridge-utils virt-manager
 ```
 
