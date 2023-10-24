@@ -53,50 +53,21 @@ sh output/qemu_aarch64/images/start-qemu.sh
 ### app_hello_world package
 该例子演示简单的cmake的源码包构建，不依赖任何三方库。
 1. 源码扩展：在intellif/source目录里增加app_hello_world目录以及对应的源码以及CMakeLists.txt；
-2. BT2 External package扩展：在intellif/buildroot/package增加app_hello_world配置，其中配置文件见下，使用标准cmake package接入，选择local本地文件；
-```
-APP_HELLO_WORLD_VERSION = 0.1
-APP_HELLO_WORLD_LICENSE = MIT
-APP_HELLO_WORLD_SITE = $(TOPDIR)/../intellif/source/app_hello_world
-APP_HELLO_WORLD_SITE_METHOD = local
-APP_HELLO_WORLD_INSTALL_STAGING = NO
-$(eval $(cmake-package))
-```
-3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展：
-```
-def app_hello_world(self, enable : bool):
-    self.br2_updated_configs.append("BR2_PACKAGE_APP_HELLO_WORLD=y" if enable else "BR2_PACKAGE_APP_HELLO_WORLD=n")
-    return self
-```
+2. BT2 External package扩展：在intellif/buildroot/package增加app_hello_world配置，其中配置文件见下，使用标准cmake package接入，选择local本地文件；参见[app_hello_world.mk](intellif/buildroot/package/app_hello_world/app_hello_world.mk)
+
+3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, 参见[config.py](tools/br2_build/config.py)中函数 app_hello_world：
+
 4. 在脚本sample/qemu_linux_build.py中增加app_hello_world配置
 5. 执行：qemu下进入/user/bin目录，执行app_hello_world
 
 ### app_opencv_resize package
 该例子演示依赖opencv库开发，app如何存放图片数据文件，如何传递构建参数。
-1. 使用下面的配置修改方法，增加qemu_intellif_defconfig opencv相关的依赖库(目前已经更新支持opencv库)；
-2. 源码扩展：在intellif/source目录里增加app_opencv_resize目录以及对应的源码以及CMakeLists.txt, 一般package中的图片等数据install到/usr/share目录中，cmake支持参数CMAKE_BUILD_TYPE,LOG_LEVEL;
+1. 使用make menuconfig配置修改方法，增加qemu_intellif_defconfig opencv相关的依赖库(目前已经更新支持opencv库)；
+2. 源码扩展：在intellif/source目录里增加app_opencv_resize目录以及对应的源码以及CMakeLists.txt, 一般package中的图片等数据install到/usr/share目录中，cmake支持参数CMAKE_BUILD_TYPE,LOG_LEVEL,参见[opencv demo的cmake文件](intellif/source/app_opencv_resize/CMakeLists.txt);
 3. BT2 External package扩展：
-- 在intellif/buildroot/package增加app_opencv_resize配置, 其中需要增加构建控制参数:BR2_PACKAGE_APP_OPENCV_RESIZE_LOG_LEVEL和BR2_PACKAGE_APP_OPENCV_RESIZE_BUILD_TYPE
-- 在app_opencv_resize.mk文件中增加build参数传递APP_OPENCV_RESIZE_CONF_OPTS变量控制；
-4. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展：
-```
-def app_opencv_resize(self, enable : bool, clean : bool = True, log_level : str = "DEBUG", build_type : str = "Release"):
-    self.br2_updated_configs.append("BR2_PACKAGE_APP_OPENCV_RESIZE=y" if enable else "BR2_PACKAGE_APP_OPENCV_RESIZE=n")
-    
-    # check valid
-    if log_level not in ["DEBUG", "INFO", "ERROR"]:
-        raise ValueError(f"log_level must be one of DEBUG, INFO, WARN, ERROR")
-    if build_type not in ["Debug", "Release"]:
-        raise ValueError(f"build_type must be one of Debug, Release")
-    
-    if enable:
-            self.br2_updated_configs.append(f'BR2_PACKAGE_APP_OPENCV_RESIZE_LOG_LEVEL="LOG_LEVEL_{log_level}"')
-            self.br2_updated_configs.append(f'BR2_PACKAGE_APP_OPENCV_RESIZE_BUILD_TYPE="{build_type}"')
-        
-    if clean:
-        self.br2_packages_clean.append("app_opencv_resize")
-    return self
-```
+- 在intellif/buildroot/package增加app_opencv_resize配置, 其中需要增加构建控制参数:[app_opencv_resize的config.in](intellif/buildroot/package/app_opencv_resize/Config.in)
+- 在app_opencv_resize.mk文件中增加build参数传递APP_OPENCV_RESIZE_CONF_OPTS变量控制, 参见[app_opencv_resize.mk](intellif/buildroot/package/app_opencv_resize/app_opencv_resize.mk)
+4. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, [config.py](tools/br2_build/config.py)中函数 app_opencv_resize
 5. 执行：qemu下进入/user/bin目录，执行app_opencv_resize
 
 
@@ -124,20 +95,13 @@ make BR2_DEFCONFIG=/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qe
 3. 通过BR2_EXTERNAL扩展的packages的依赖关系必须显示指明，对于buildroot而言，任意package没有指明依赖关系,package的构建顺序是不确定的，比如HCP库依赖HAL，MAL库，HAL依赖库依赖linux等；
 
 
-4. linux内核本地源码构建很特殊，修改脚本务必注意。buildroot的linux.mk文件很复杂，而且内部也有不少package 依赖linux ，移植到外部定制custom_linux.mk文件不可行。linux.mk文件不支持源码build，只能通过TAR包，GIT等方式下载。设计上先打包linux source包(TAR包)，然后buildroot会缓存到dl下载目录，再加压到到build目录下编译，内核代码修改后，如果需要编译，需要显示调用Configure的linux_local(clean = true)接口，删除linux的中间结果。
+4. linux内核本地源码构建很特殊，修改脚本务必注意。buildroot的linux.mk文件很复杂，而且内部也有不少package 依赖linux ，移植到外部定制custom_linux.mk文件不可行。linux.mk文件不支持源码build，只能通过TAR包，GIT等方式下载。设计上先打包linux source包(TAR包)，然后buildroot会缓存到dl下载目录，再加压到到build目录下编译，内核代码修改后，如果需要编译，需要显示调用Configure的linux_local(clean = true)接口，删除linux的中间结果。参见[配置文件qemu_intellif_defconfig](intellif/buildroot/configs/qemu_intellif_defconfig) LINUX的配置。
 
-```
-BR2_LINUX_KERNEL=y
-BR2_LINUX_KERNEL_CUSTOM_TARBALL=y
-BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="file://$(BR2_EXTERNAL_INTELLIF_PATH)/tarball/linux.tar"
-BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
-BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_INTELLIF_PATH)/board/qemu/aarch64-virt/linux.config"
-BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
-```
 
 
 # python接口
-1. [python api脚本: config](tools/br2_build/config.py)
-2. [python api脚本: build](tools/br2_build/build.py)
+1. [python api脚本: config文件](tools/br2_build/config.py)
+2. [python api脚本: build文件](tools/br2_build/build.py) 
+
 
 
