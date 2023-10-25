@@ -49,7 +49,10 @@ class Configure(object):
                     f.write(config + '\n')
             run_shell_cmd(f"make O={self.builddir} olddefconfig", self.env)        
             self.check_config_valid()
-        if read_buildroot_config(self.configfile, 'BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION'):
+            
+        # 如果linux.tar包不存在，则创建
+        linux_tarball = os.path.join(BUILDROOT_TARBALL_DIR, 'linux.tar')
+        if read_buildroot_config(self.configfile, 'BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION') == "file://$(BR2_EXTERNAL_INTELLIF_PATH)/tarball/linux.tar" and not os.path.exists(linux_tarball):
             create_git_repo_tar(LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR)            
         return self
     
@@ -59,8 +62,6 @@ class Configure(object):
         with open(configfile) as configf:
             configlines = configf.readlines()
         configlines = [line.strip() for line in configlines if line.strip().startswith('BR2')]
-
-
 
         with open(self.defconfig) as defconfigf:
             defconfiglines = defconfigf.readlines()

@@ -4,7 +4,10 @@ APP_HELLO_WORLD_LICENSE = MIT
 
 APP_HELLO_WORLD_SITE = $(TOPDIR)/../intellif/source/app_hello_world
 APP_HELLO_WORLD_SITE_METHOD = local
+
+# 传递环境变量
+APP_HELLO_WORLD_CONF_ENV = COMPANY_NAME="intellif" \
+	VERSION=$(APP_HELLO_WORLD_VERSION)
+	
 APP_HELLO_WORLD_INSTALL_STAGING = NO
-
-
 $(eval $(cmake-package))

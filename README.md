@@ -49,7 +49,14 @@ sh output/qemu_aarch64/images/start-qemu.sh
 
 2. 进入qemu（以root账号）linux，cd /usr/bin/，执行app开头的sample示例：
 
-## 如何增加package包
+## 如何通过源码package构建
+| package名称以及链接       |buildroot功能            |
+|-------------|-----------------|
+|[app_hello_world](#app_hello_world-package) | 1.通过cmake 源码构建；<br> 2. 通过环境变量构建
+|[app_opencv_resize](#app_opencv_resize-package) | 1. 三方库opencv构建；<br> 2. 如何存放图片数据 <br> 3. 通过cmake -D传输构建参数|
+|linux | 1. linux内核源码构建|
+ 
+
 ### app_hello_world package
 该例子演示简单的cmake的源码包构建，不依赖任何三方库。
 1. 源码扩展：在intellif/source目录里增加app_hello_world目录以及对应的源码以及CMakeLists.txt；

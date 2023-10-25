@@ -1,7 +1,8 @@
 
 import os
 import multiprocessing
-from . import run_shell_cmd, BR2_EXTERNAL_DIR, OUTPUT_DIR
+from . import run_shell_cmd, read_buildroot_config, create_git_repo_tar
+from . import BR2_EXTERNAL_DIR, OUTPUT_DIR, LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR, BUILDROOT_DL_DIR
 from .config import Configure
 
 
@@ -18,11 +19,27 @@ class Build(object):
             run_shell_cmd(f"make O={self.configure.builddir} {pkt}-dirclean", self.configure.env)
         pass
     
+    def linux_clean(self):
+        if read_buildroot_config(self.configure.configfile, 'BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION') == "file://$(BR2_EXTERNAL_INTELLIF_PATH)/tarball/linux.tar" :
+            
+            # 清除buildroot的linux目录缓存tarball
+            linux_tarball_cached = os.path.join(BUILDROOT_DL_DIR, 'linux', 'linux.tar')    
+            if os.path.exists(linux_tarball_cached):
+                os.remove(linux_tarball_cached)
+                
+            # 清除output目录下的linux目录
+            output_full_dir = os.path.join(self.configure.builddir, 'build','linux-custom')
+            if os.path.exists(output_full_dir):
+                os.system(f"rm -rf {output_full_dir}")
+        
+            # 创建linux源码tarball
+            create_git_repo_tar(LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR)
+        return self
+        
+    
     def build_all(self):
         if run_shell_cmd(f"make O={self.configure.builddir} -j{MAX_JOBS}", self.configure.env):
             return os.path.join(self.configure.builddir, 'images')
+        return self
     
-    
-    def _clean(self):
-        pass    
     
