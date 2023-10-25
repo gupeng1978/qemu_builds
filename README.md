@@ -55,7 +55,7 @@ sh output/qemu_aarch64/images/start-qemu.sh
 |[app_hello_world](#app_hello_world-package) | 1.通过cmake 源码构建；<br> 2. 通过环境变量构建
 |[app_opencv_resize](#app_opencv_resize-package) | 1. 三方库opencv构建；<br> 2. 如何存放图片数据 <br> 3. 通过cmake -D传输构建参数|
 |linux | 1. linux内核源码构建|
- 
+ [ko_hello_world](#ko_hello_world-package) | 1. linux 内核ko模块构建|
 
 ### app_hello_world package
 该例子演示简单的cmake的源码包构建，不依赖任何三方库。
@@ -77,6 +77,16 @@ sh output/qemu_aarch64/images/start-qemu.sh
 4. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, [config.py](tools/br2_build/config.py)中函数 app_opencv_resize
 5. 执行：qemu下进入/user/bin目录，执行app_opencv_resize
 
+
+### ko_hello_world package
+该例子演示如何构建linux kernel module(ko)。
+1. 源码扩展：在intellif/source目录里增加ko_hello_world目录以及对应的源码以及Makefile，参见[Makefile](intellif/source/ko_hello_world/Makefile)；
+2. BT2 External package扩展：在intellif/buildroot/package增加ko_hello_world配置
+
+3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, 参见[config.py](tools/br2_build/config.py)中函数 ko_hello_world：
+
+4. 在脚本sample/qemu_linux_build.py中增加ko_hello_world配置
+5. 执行：qemu下, 安装insmod /lib/modules/5.10.0/extra/hello.ko
 
 ## 配置以及接口扩展注意事项
 1. 用户可以直接修改defconfig配置，但如果需要安装/删除三方库，那么必须通过buildroot的menuconfig配置（自动解决依赖关系），以修改/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qemu_intellif_defconfig 为例来说明：

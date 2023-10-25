@@ -41,6 +41,12 @@ class Configure(object):
             self.br2_packages_clean.append("app_hello_world")
         return self
     
+    def ko_hello_world(self, enable : bool,  clean : bool = True):
+        self.br2_updated_configs.append("BR2_PACKAGE_KO_HELLO_WORLD=y" if enable else "BR2_PACKAGE_KO_HELLO_WORLD=n")
+        if clean:
+            self.br2_packages_clean.append("ko_hello_world")
+        return self
+    
     def update_config(self):
         if self.br2_updated_configs:
             print(f"update config: {self.br2_updated_configs}")
