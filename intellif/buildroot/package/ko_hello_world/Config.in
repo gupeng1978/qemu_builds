@@ -1,4 +1,5 @@
 config BR2_PACKAGE_KO_HELLO_WORLD
     bool "KO_HELLO_WORLD"
+    depends on BR2_LINUX_KERNEL
     help
         KO_HELLO_WORLD is an hello-world demo package for linux kernel module.

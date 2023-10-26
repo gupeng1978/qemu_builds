@@ -55,7 +55,10 @@ sh output/qemu_aarch64/images/start-qemu.sh
 |[app_hello_world](#app_hello_world-package) | 1.通过cmake 源码构建；<br> 2. 通过环境变量构建
 |[app_opencv_resize](#app_opencv_resize-package) | 1. 三方库opencv构建；<br> 2. 如何存放图片数据 <br> 3. 通过cmake -D传输构建参数|
 |linux | 1. linux内核源码构建|
- [ko_hello_world](#ko_hello_world-package) | 1. linux 内核ko模块构建|
+|[ko_hello_world](#ko_hello_world-package) | 1. linux 内核ko模块构建; <br> 2. 多个子模块ko构建 |
+|[sdk_drv](#sdk_drv-package) | 1. 复杂包(ko,lib,app)构建|
+
+
 
 ### app_hello_world package
 该例子演示简单的cmake的源码包构建，不依赖任何三方库。
@@ -79,14 +82,18 @@ sh output/qemu_aarch64/images/start-qemu.sh
 
 
 ### ko_hello_world package
-该例子演示如何构建linux kernel module(ko)。
+该例子演示如何构建linux kernel module(ko), 该包下有两个ko模块，分别是hello_1.ko, hello_2.ko。
 1. 源码扩展：在intellif/source目录里增加ko_hello_world目录以及对应的源码以及Makefile，参见[Makefile](intellif/source/ko_hello_world/Makefile)；
 2. BT2 External package扩展：在intellif/buildroot/package增加ko_hello_world配置
 
 3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, 参见[config.py](tools/br2_build/config.py)中函数 ko_hello_world：
 
 4. 在脚本sample/qemu_linux_build.py中增加ko_hello_world配置
-5. 执行：qemu下, 安装insmod /lib/modules/5.10.0/extra/hello.ko
+5. 执行：qemu下, 安装insmod /lib/modules/5.10.0/extra/hello_1.ko, insmod /lib/modules/5.10.0/extra/hello_2.ko
+
+### sdk_drv package
+该例子演示如何构建复杂包，包括ko模块，lib模块，app模块。
+
 
 ## 配置以及接口扩展注意事项
 1. 用户可以直接修改defconfig配置，但如果需要安装/删除三方库，那么必须通过buildroot的menuconfig配置（自动解决依赖关系），以修改/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qemu_intellif_defconfig 为例来说明：
@@ -114,6 +121,10 @@ make BR2_DEFCONFIG=/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qe
 
 4. linux内核本地源码构建很特殊，修改脚本务必注意。buildroot的linux.mk文件很复杂，而且内部也有不少package 依赖linux ，移植到外部定制custom_linux.mk文件不可行。linux.mk文件不支持源码build，只能通过TAR包，GIT等方式下载。设计上先打包linux source包(TAR包)，然后buildroot会缓存到dl下载目录，再加压到到build目录下编译，内核代码修改后，如果需要编译，需要显示调用Configure的linux_local(clean = true)接口，删除linux的中间结果。参见[配置文件qemu_intellif_defconfig](intellif/buildroot/configs/qemu_intellif_defconfig) LINUX的配置。
 
+
+5. linux ko构建请注意：
+- 如果单ko模块，请参考[ko_hello_world](#ko_hello_world-package) , mk文件使用标准的$(eval $(kernel-module))构建，该构建会自动加上linux内核依赖, 比如$(2)_DEPENDENCIES += linux。
+- 如果是嵌入在整个软件包（内部包括lib，ko，app等）构建，请参考[sdk_drv](#sdk_drv-package) , config.in文件中建议加上linux依赖，mk文件必须显示加上linux依赖。
 
 
 # python接口
