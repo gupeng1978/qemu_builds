@@ -49,8 +49,10 @@ class Configure(object):
     
     def sdk_drv(self, enable : bool,  clean : bool = True):
         self.br2_updated_configs.append("BR2_PACKAGE_SDK_DRV=y" if enable else "BR2_PACKAGE_SDK_DRV=n")
+        self.br2_updated_configs.append("BR2_PACKAGE_SDK_DRV_KO=y" if enable else "BR2_PACKAGE_SDK_DRV_KO=n")
         if clean:
             self.br2_packages_clean.append("sdk_drv")
+            self.br2_packages_clean.append("sdk_drv_ko")
         return self
     
     def update_config(self):

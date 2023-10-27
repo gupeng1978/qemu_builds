@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDK_DRV_KO
+    bool "SDK_DRV_KO"
+    depends on BR2_LINUX_KERNEL
+    help
+        SDK_DRV_KO is an sdk driver demo package.

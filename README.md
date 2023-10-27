@@ -93,9 +93,17 @@ sh output/qemu_aarch64/images/start-qemu.sh
 
 ### sdk_drv package
 该例子演示如何构建复杂包，包括ko模块，lib模块，app模块。
+1. 源码扩展：
+2. BT2 External package扩展，此处增加2个package，分别是sdk_drv, sdk_drv_
+3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, 参见[config.py](tools/br2_build/config.py)中函数 sdk_drv：
+4. 在脚本sample/qemu_linux_build.py中增加sdk_drv配置
+5. 执行：
+
 
 
 ## 配置以及接口扩展注意事项
+---
+
 1. 用户可以直接修改defconfig配置，但如果需要安装/删除三方库，那么必须通过buildroot的menuconfig配置（自动解决依赖关系），以修改/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qemu_intellif_defconfig 为例来说明：
 
 ```
@@ -110,22 +118,77 @@ make BR2_DEFCONFIG=/home/gupeng/github/qemu_builds/intellif/buildroot/configs/qe
 
 ```
 
+---
 2. 通过configure.py增加BR2参数写法务必规范，更新配置后需要检测.config文件配置是否生效，下面几种情况需要注意：
 - BR2的参数在buildroot中无法识别的，所有参数必须在config.in中定义；
 - BR2的参数依赖关系必须满足，比如app依赖opencv库（多个库），但defconfig中必须打开依赖的package；
 - 添加cmake的配置参数,比如-DCMAKE_BUILD_TYPE="Release", 注意添加""（原因是解决make olddefconfig自动增加""，mk配置中会删除“”);
 
-
+---
 3. 通过BR2_EXTERNAL扩展的packages的依赖关系必须显示指明，对于buildroot而言，任意package没有指明依赖关系,package的构建顺序是不确定的，比如HCP库依赖HAL，MAL库，HAL依赖库依赖linux等；
 
-
+---
 4. linux内核本地源码构建很特殊，修改脚本务必注意。buildroot的linux.mk文件很复杂，而且内部也有不少package 依赖linux ，移植到外部定制custom_linux.mk文件不可行。linux.mk文件不支持源码build，只能通过TAR包，GIT等方式下载。设计上先打包linux source包(TAR包)，然后buildroot会缓存到dl下载目录，再加压到到build目录下编译，内核代码修改后，如果需要编译，需要显示调用Configure的linux_local(clean = true)接口，删除linux的中间结果。参见[配置文件qemu_intellif_defconfig](intellif/buildroot/configs/qemu_intellif_defconfig) LINUX的配置。
 
-
+---
 5. linux ko构建请注意：
 - 如果单ko模块，请参考[ko_hello_world](#ko_hello_world-package) , mk文件使用标准的$(eval $(kernel-module))构建，该构建会自动加上linux内核依赖, 比如$(2)_DEPENDENCIES += linux。
 - 如果是嵌入在整个软件包（内部包括lib，ko，app等）构建，请参考[sdk_drv](#sdk_drv-package) , config.in文件中建议加上linux依赖，mk文件必须显示加上linux依赖。
 
+---
+6. <span style="color:red">不建议使用cmake 调用add_custom_target(传递ARCH,CROSS_COMPILE，LINUX_DIR) 构建linux ko模块构建，</span>原因如下：
+- buildroot会构建host环境的编译工具，而通过cmake的add_custom_target调用使用的是本机(非Buildroot编译出的Host主机)配套工具，可能会导致编译失败；
+- buildroot的ko构建会传递的参数非常繁多，比如ARCH,CROSS_COMPILE，LINUX_DIR等，如果使用cmake的add_custom_target调用，需要用户自己传递这些参数，非常麻烦；
+- 下面为buildroot的ko编译的关键变量以及buildroot的linux ko构建命令：$(LINUX_MAKE_ENV), $(LINUX_DIR), $(LINUX_MAKE_FLAGS)
+```
+# Build the kernel module(s)
+# Force PWD for those packages that want to use it to find their
+# includes and other support files (Booo!)
+define $(2)_KERNEL_MODULES_BUILD
+	@$$(call MESSAGE,"Building kernel module(s)")
+	$$(foreach d,$$($(2)_MODULE_SUBDIRS), \
+		$$(LINUX_MAKE_ENV) $$($$(PKG)_MAKE) \
+			-C $$(LINUX_DIR) \
+			$$(LINUX_MAKE_FLAGS) \
+			$$($(2)_MODULE_MAKE_OPTS) \
+			PWD=$$(@D)/$$(d) \
+			M=$$(@D)/$$(d) \
+			modules$$(sep))
+endef
+$(2)_POST_BUILD_HOOKS += $(2)_KERNEL_MODULES_BUILD
+
+# Install the kernel module(s)
+# Force PWD for those packages that want to use it to find their
+# includes and other support files (Booo!)
+define $(2)_KERNEL_MODULES_INSTALL
+	@$$(call MESSAGE,"Installing kernel module(s)")
+	$$(foreach d,$$($(2)_MODULE_SUBDIRS), \
+		$$(LINUX_MAKE_ENV) $$($$(PKG)_MAKE) \
+			-C $$(LINUX_DIR) \
+			$$(LINUX_MAKE_FLAGS) \
+			$$($(2)_MODULE_MAKE_OPTS) \
+			PWD=$$(@D)/$$(d) \
+			M=$$(@D)/$$(d) \
+			modules_install$$(sep))
+endef
+$(2)_POST_INSTALL_TARGET_HOOKS += $(2)_KERNEL_MODULES_INSTALL
+```
+以具体例子展开来看，
+```
+$(LINUX_MAKE_ENV)会设置：
+1. PATH: Buildroot的构建PATH
+2. PKG_CONFIG_XXX: Buildroot的构建PKG_CONFIG_XXX；
+
+
+$(LINUX_MAKE_FLAGS)会设置:
+1. HOSTCC以及参数：
+2. ARCH=arm64 
+3. INSTALL_MOD_PATH
+4. CROSS_COMPILE
+5. WERROR=0 
+6. REGENERATE_PARSERS=1 
+7. DEPMOD  # DEPMOD 是一个工具，它用于处理 Linux 内核模块的依赖关系。当你安装新的内核模块时，DEPMOD 生成一个模块依赖关系表，
+```
 
 # python接口
 1. [python api脚本: config文件](tools/br2_build/config.py)
