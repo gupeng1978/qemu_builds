@@ -29,6 +29,13 @@ target_include_directories(sdk_drv_lib INTERFACE
 
 
 # ---------
+# app 编译
+# ---------
+add_executable(sdk_drv_app app/app.cpp)
+target_link_libraries(sdk_drv_app PRIVATE sdk_drv_lib)
+
+
+# ---------
 # install
 # ---------
 # include(GNUInstallDirs) 是 CMake 中的一个命令，它提供了一种标准的方式来定义安装目录的位置。
@@ -72,7 +79,7 @@ install(TARGETS sdk_drv_lib
 
 install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-# 安装导出目标文件
+# 安装导出目标文件，其他项目中可以使用find_package()和target_link_libraries()命令来找到和链接
 install(EXPORT "${TARGETS_EXPORT_NAME}"
     NAMESPACE "${namespace}"
     DESTINATION "${config_install_dir}"
@@ -83,5 +90,6 @@ install(FILES "${project_config}" "${version_config}"
     DESTINATION "${config_install_dir}"
 )
 
-
+# 安装app
+install(TARGETS sdk_drv_app DESTINATION bin)
 

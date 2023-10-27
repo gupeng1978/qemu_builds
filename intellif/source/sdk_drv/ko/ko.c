@@ -70,7 +70,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 
    if (error_count==0){
       printk(KERN_INFO "Hello: Sent %d characters to the user\n", size_of_message);
-      return (size_of_message=0);
+      return size_of_message;
    }
    else {
       printk(KERN_INFO "Hello: Failed to send %d characters to the user\n", error_count);

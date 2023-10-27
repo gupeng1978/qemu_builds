@@ -1,6 +1,7 @@
-// extern "C" void call_ko();
+#include "../include/sdk_drv.h"
+#include <stdio.h>
 
 int main() {
-    // call_ko();
+    printf("get drv kernel message: %s\n", get_message());
     return 0;
 }

@@ -56,7 +56,7 @@ sh output/qemu_aarch64/images/start-qemu.sh
 |[app_opencv_resize](#app_opencv_resize-package) | 1. 三方库opencv构建；<br> 2. 如何存放图片数据 <br> 3. 通过cmake -D传输构建参数|
 |linux | 1. linux内核源码构建|
 |[ko_hello_world](#ko_hello_world-package) | 1. linux 内核ko模块构建; <br> 2. 多个子模块ko构建 |
-|[sdk_drv](#sdk_drv-package) | 1. 复杂包(ko,lib,app)构建|
+|[sdk_drv](#sdk_drv-package) | 1. 复杂包(ko,lib,app)构建; <br> 2. 标准cmake install写法 |
 
 
 
@@ -97,7 +97,7 @@ sh output/qemu_aarch64/images/start-qemu.sh
 2. BT2 External package扩展，此处增加2个package，分别是sdk_drv, sdk_drv_
 3. Tools脚本编译扩展：在tools/br2_build的config.py增加接口扩展, 参见[config.py](tools/br2_build/config.py)中函数 sdk_drv：
 4. 在脚本sample/qemu_linux_build.py中增加sdk_drv配置
-5. 执行：
+5. 执行：qemu下, 安装insmod /lib/modules/5.10.0/extra/ko.ko ，执行/usr/bin/sdk_drv_app
 
 
 
@@ -189,6 +189,14 @@ $(LINUX_MAKE_FLAGS)会设置:
 6. REGENERATE_PARSERS=1 
 7. DEPMOD  # DEPMOD 是一个工具，它用于处理 Linux 内核模块的依赖关系。当你安装新的内核模块时，DEPMOD 生成一个模块依赖关系表，
 ```
+
+---
+7. 通过cmake构建的package注意事项：[cmake规范写法](intellif/source/sdk_drv/CMakeLists.txt)
+- buildroot主要为嵌入式linux构建，为了减少内存消耗，所有的package都是在host交叉编译的，因此不需要在soc的target系统上添加include头文件；
+- 参考一些标准cmake package构建(比如opencv等)，构建的头文件，库文件等一般install到/host/aarch64-buildroot-linux-gnu/sysroot/中缓存，该目录主要用于交叉编译package，而不是在staging目录缓存；
+- 安装package导出目标文件和配置文件,其他package通过find_package方式查找等通用方式；
+
+
 
 # python接口
 1. [python api脚本: config文件](tools/br2_build/config.py)
