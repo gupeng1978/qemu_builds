@@ -21,3 +21,17 @@ build = (
         build_all()
 )
 
+graph_build = (
+    Build(config).
+    graph_build()
+)
+print("graph_build path: ", graph_build)
+
+graph_depends = (
+    Build(config).
+    graph_depends()
+)
+print("graph_depends path: ", graph_depends)
+
+
+
