@@ -86,3 +86,5 @@ class Configure(object):
         for defconfigline in defconfiglines:
             if defconfigline not in configlines:                
                 raise ValueError(f"defconfig {self.defconfig} is not valid, Missing: {defconfigline.strip()}\n" )
+
+

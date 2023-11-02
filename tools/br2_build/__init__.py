@@ -85,3 +85,15 @@ def create_git_repo_tar(repo_path, output_path):
     return tar_file
 
 
+# TODO: @ma.dengyun
+def get_buildroot_packages(package_pattern):
+    """
+    Get the buildroot packages and version information that match the given package pattern.
+
+    Args:
+        package_pattern (str): The package pattern to match.
+
+    Returns:
+        dict: A dictionary containing the buildroot packages and their version information that match the given package pattern.
+    """
+    pass
