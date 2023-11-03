@@ -2,9 +2,15 @@ import os
 import sys
 import subprocess
 import argparse
-
+from datetime import datetime
+from ftplib import FTP, error_perm
 TOP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOCKER_TOP_DIR = "/home/intellif/qemu_builds"
+OUTPUT_DIR = os.path.join(TOP_DIR, 'output')
+
+
+
+    
 
 def run_shell_cmd(cmd : str, env : dict , dir : str ):
     """
@@ -88,9 +94,102 @@ def run_script(args):
         raise ValueError(f"chown {TOP_DIR} failed")
     
     pass
+
+script_start_time = None
+script_end_time = None
+
+def get_script_build_platform(directory = OUTPUT_DIR):
+    modified_config_files = []
     
-def upload_ftp():
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file == '.config':
+                file_path = os.path.join(root, file)
+                mtime = os.path.getmtime(file_path)
+                last_modified_date = datetime.fromtimestamp(mtime)
+                if script_start_time <= last_modified_date <= script_end_time:
+                    modified_config_files.append(file_path)
+        pass
+    
+    print(f"modified_config_files = {modified_config_files}")    
+    
+    #check file 包括目录docker
+    for file in modified_config_files:
+        if file.find('docker') == -1:
+            raise ValueError(f"docker build failed, no need upload ftp")
     pass
+
+
+
+class FTPUploader:
+    def __init__(self, config):
+        self.config = config
+        self.ftp = FTP()
+
+    def connect(self):
+        self.ftp.connect(self.config['url'], 21)
+        self.ftp.login(self.config['user'], self.config['passwd'])
+        self.ftp.set_pasv(False)
+        self.ftp.cwd(self.config['top_dir'])
+
+    def create_or_clear_directory(self, directory):
+        if directory not in self.ftp.nlst():
+            self.ftp.mkd(directory)
+        self.ftp.cwd(directory)
+        for file in self.ftp.nlst():
+            self.ftp.delete(file)
+
+    def upload_file(self, local_path, remote_name):
+        with open(local_path, 'rb') as file:
+            self.ftp.storbinary(f'STOR {remote_name}', file)
+
+    def quit(self):
+        self.ftp.quit()
+
+BT_FTP = { 'url': "192.168.14.107",
+        'user': "intellif_build",
+        'passwd': "123456",
+        'top_dir': 'relay_build',
+}    
+
+def upload_ftp(ftp_dir):
+    uploader = FTPUploader(BT_FTP)
+    try:
+        uploader.connect()
+        uploader.create_or_clear_directory(ftp_dir)
+        uploader.upload_file('/home/gupeng/github/qemu_builds/tools/docker/Dockerfile', 'Dockerfile')
+    except (error_perm, Exception) as e:
+        print(f"An error occurred: {e}")
+    finally:
+        uploader.quit()
+
+
+# def upload_ftp(ftp_dir):
+#     # get_script_build_platform()
+    
+    
+#     # 连接到ftp服务器
+#     ftp = FTP()
+#     ftp.connect(BT_FTP['url'], 21)
+#     ftp.login(BT_FTP['user'], BT_FTP['passwd'])
+#     ftp.set_pasv(False)
+#     ftp.cwd(BT_FTP['top_dir'])
+    
+    
+#     #创建目录，如果目录存在则清空目录内容
+#     # check ftp_dir是否存在
+#     if ftp_dir not in ftp.nlst():
+#         ftp.mkd(ftp_dir)
+#     ftp.cwd(ftp_dir)
+#     for file in ftp.nlst():
+#         ftp.delete(file)
+    
+    
+#     # 上传文件/home/gupeng/github/qemu_builds/tools/docker/Dockerfile到ftp服务器
+#     ftp.storbinary('STOR Dockerfile', open('/home/gupeng/github/qemu_builds/tools/docker/Dockerfile', 'rb'))
+    
+#     ftp.quit()    
+#     pass
 
 
 if __name__ == '__main__':
@@ -99,13 +198,17 @@ if __name__ == '__main__':
     parser.add_argument('--image', required=True, help='Docker image name')
     parser.add_argument('--script', required=True, help='Python script name')
     parser.add_argument('--sudo_passwd', required=True, help='sudo password')
+    parser.add_argument('--ftp', required=False, help='build ftp upload dir')
     args = parser.parse_args()
     
     try:
-        run_script(args)
-        upload_ftp()
+        script_start_time = datetime.now()
+        # run_script(args)
+        script_end_time = datetime.now()
+        upload_ftp(args.ftp)
     except Exception as e:
         # 在异常发生时执行额外的操作
+        print(f"An error occurred: {e}")
         if run_shell_cmd(f"echo {args.sudo_passwd} | sudo -S chown -R {os.environ['USER']}:{os.environ['USER']} {TOP_DIR}", os.environ, TOP_DIR).returncode != 0:
             raise ValueError(f"chown {TOP_DIR} failed")
         sys.exit(1)  
