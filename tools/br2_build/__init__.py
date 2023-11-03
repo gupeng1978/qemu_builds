@@ -1,6 +1,8 @@
 import os
 import subprocess
 import sys
+import re
+
 
 TOP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUTPUT_DIR = os.path.join(TOP_DIR, 'output')
@@ -35,7 +37,7 @@ def run_shell_cmd(cmd : str, env : dict = {"PATH": os.environ["PATH"]}, dir : st
         raise ValueError(f'error: run_shell_cmd run {cmd} failed, ret_code = {e.returncode}, dir = {dir}')
     return out
 
-        
+
 
 def read_buildroot_config(config_path, key):
     """
@@ -81,7 +83,7 @@ def create_git_repo_tar(repo_path, output_path):
     """
     repo_name = os.path.basename(repo_path).split('.')[0]
     tar_file = os.path.join(output_path, f'{repo_name}.tar')
-    run_shell_cmd(cmd = f"tar -cvf {tar_file} --exclude=./.git  {repo_name}", dir = os.path.join(repo_path,".."));    
+    run_shell_cmd(cmd = f"tar -cvf {tar_file} --exclude=./.git  {repo_name}", dir = os.path.join(repo_path,".."));
     return tar_file
 
 
@@ -96,7 +98,6 @@ def get_env_in_docker():
     except Exception:
         return False
 
-# TODO: @ma.dengyun
 def get_buildroot_packages(package_pattern):
     """
     Get the buildroot packages and version information that match the given package pattern.
@@ -107,4 +108,25 @@ def get_buildroot_packages(package_pattern):
     Returns:
         dict: A dictionary containing the buildroot packages and their version information that match the given package pattern.
     """
-    pass
+    package_dir = os.path.join(BUILDROOT_DIR, "package")
+    # 以package_pattern，后接0个或者多个数字，以.mk结尾
+    reg_pattern = package_pattern + r'\d*\.mk$'
+    # package名
+    # _VERSION
+    # 0个或多个空格、tab
+    # =
+    # package版本
+    version_pattern = '(.+)_VERSION[ \t]*=(.+)'
+    pack_dict = {}
+
+    for root, dirs, files in os.walk(package_dir):
+        for file in files:
+            if re.match(reg_pattern, file):
+                file = os.path.join(root, file)
+                with open(file, 'r') as f:
+                    for i, line in enumerate(f):
+                        match = re.search(version_pattern, line)
+                        if(match):
+                            pack_dict[match.group(1).lower()] = match.group(2).strip()
+                            break
+    return pack_dict
