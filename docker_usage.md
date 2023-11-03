@@ -29,6 +29,7 @@ docker --version
 1. 启动：sudo systemctl start docker
 2. 构建镜像： sudo docker build -t intellif-buildroot .
 3. 查看镜像：sudo docker images
-4. 运行镜像：sudo docker run -it intellif-buildroot /bin/bash
+4. 运行镜像：sudo docker run  -it intellif-buildroot /bin/bash
 5. 保存镜像：sudo docker save -o intellif-buildroot.tar intellif-buildroot:latest
 6. gzip压缩：gzip intellif-buildroot.tar
+

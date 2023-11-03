@@ -85,6 +85,17 @@ def create_git_repo_tar(repo_path, output_path):
     return tar_file
 
 
+
+def get_env_in_docker():
+    """
+    Returns True if the current environment is running inside a Docker container, False otherwise.
+    """
+    try:
+        with open('/proc/1/cgroup', 'rt') as ifh:
+            return 'docker' in ifh.read()
+    except Exception:
+        return False
+
 # TODO: @ma.dengyun
 def get_buildroot_packages(package_pattern):
     """

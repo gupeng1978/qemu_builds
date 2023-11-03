@@ -2,7 +2,7 @@
 import os
 import multiprocessing
 from . import run_shell_cmd, read_buildroot_config, create_git_repo_tar
-from . import BR2_EXTERNAL_DIR, OUTPUT_DIR, LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR, BUILDROOT_DL_DIR
+from . import BR2_EXTERNAL_DIR, LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR, BUILDROOT_DL_DIR
 from .config import Configure
 
 
@@ -41,7 +41,6 @@ class Build(object):
         if run_shell_cmd(f"make O={self.configure.builddir} -j{MAX_JOBS}", self.configure.env):
             return os.path.join(self.configure.builddir, 'images')
         return self
-<<<<<<< Updated upstream
 
     """
     @brief 生成buildroot的build graph
@@ -64,17 +63,3 @@ class Build(object):
         if run_shell_cmd(f"make O={self.configure.builddir} graph-depends -j{MAX_JOBS}", self.configure.env):
             return os.path.join(self.configure.builddir, 'graphs/graph-depends.pdf')
         return self
-=======
-    
-    # TODO: @ma.dengyun
-    def graph_build(self):
-        pass
-    
-    # TODO: @ma.dengyun
-    def graph_depends(self):
-        pass
-    
-    
-    def save_context(self, context_dir):
-        pass
->>>>>>> Stashed changes

@@ -1,6 +1,6 @@
 
 import os
-from . import run_shell_cmd, read_buildroot_config, create_git_repo_tar
+from . import run_shell_cmd, read_buildroot_config, create_git_repo_tar, get_env_in_docker
 from . import BR2_EXTERNAL_DIR, OUTPUT_DIR, LINUX_SOURCE_DIR, BUILDROOT_TARBALL_DIR
 
 
@@ -11,7 +11,10 @@ CONFIGS_DIR = os.path.join(BR2_EXTERNAL_DIR, 'configs')
 class Configure(object):
     def __init__(self, defconfig, platform):
         self.defconfig = os.path.join(CONFIGS_DIR, defconfig)
-        self.builddir = os.path.join(OUTPUT_DIR, platform)
+        if get_env_in_docker():
+            self.builddir = os.path.join(OUTPUT_DIR, platform, 'docker')
+        else:
+            self.builddir = os.path.join(OUTPUT_DIR, platform, 'local')
         self.configfile = os.path.join(self.builddir, '.config')
         self.br2_updated_configs = []
         self.br2_packages_clean = []
