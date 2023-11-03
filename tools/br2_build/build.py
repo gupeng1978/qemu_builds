@@ -63,3 +63,9 @@ class Build(object):
         if run_shell_cmd(f"make O={self.configure.builddir} graph-depends -j{MAX_JOBS}", self.configure.env):
             return os.path.join(self.configure.builddir, 'graphs/graph-depends.pdf')
         return self
+<<<<<<< HEAD
+=======
+
+    def save_context(self, context_dir):
+        pass
+>>>>>>> d967e64fc69bd92d1f77ddf7385df46ab639f4aa
