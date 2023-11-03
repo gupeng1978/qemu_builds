@@ -41,7 +41,6 @@ class Build(object):
         if run_shell_cmd(f"make O={self.configure.builddir} -j{MAX_JOBS}", self.configure.env):
             return os.path.join(self.configure.builddir, 'images')
         return self
-<<<<<<< Updated upstream
 
     """
     @brief 生成buildroot的build graph
@@ -64,17 +63,6 @@ class Build(object):
         if run_shell_cmd(f"make O={self.configure.builddir} graph-depends -j{MAX_JOBS}", self.configure.env):
             return os.path.join(self.configure.builddir, 'graphs/graph-depends.pdf')
         return self
-=======
-    
-    # TODO: @ma.dengyun
-    def graph_build(self):
-        pass
-    
-    # TODO: @ma.dengyun
-    def graph_depends(self):
-        pass
-    
-    
+
     def save_context(self, context_dir):
         pass
->>>>>>> Stashed changes

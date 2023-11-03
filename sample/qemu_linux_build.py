@@ -22,13 +22,13 @@ build = (
 )
 
 graph_build = (
-    Build(config).
+    Build(Configure("qemu_intellif_defconfig", "qemu_aarch64")).
     graph_build()
 )
 print("graph_build path: ", graph_build)
 
 graph_depends = (
-    Build(config).
+    Build(Configure("qemu_intellif_defconfig", "qemu_aarch64")).
     graph_depends()
 )
 print("graph_depends path: ", graph_depends)
