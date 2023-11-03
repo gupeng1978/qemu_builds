@@ -87,7 +87,6 @@ def create_git_repo_tar(repo_path, output_path):
     return tar_file
 
 
-<<<<<<< Updated upstream
 
 def get_env_in_docker():
     """
@@ -99,9 +98,6 @@ def get_env_in_docker():
     except Exception:
         return False
 
-=======
-# TODO: @ma.dengyun
->>>>>>> Stashed changes
 def get_buildroot_packages(package_pattern):
     """
     Get the buildroot packages and version information that match the given package pattern.
@@ -112,7 +108,6 @@ def get_buildroot_packages(package_pattern):
     Returns:
         dict: A dictionary containing the buildroot packages and their version information that match the given package pattern.
     """
-<<<<<<< Updated upstream
     package_dir = os.path.join(BUILDROOT_DIR, "package")
     # 以package_pattern，后接0个或者多个数字，以.mk结尾
     reg_pattern = package_pattern + r'\d*\.mk$'
@@ -135,6 +130,3 @@ def get_buildroot_packages(package_pattern):
                             pack_dict[match.group(1).lower()] = match.group(2).strip()
                             break
     return pack_dict
-=======
-    pass
->>>>>>> Stashed changes

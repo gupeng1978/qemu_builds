@@ -2,6 +2,9 @@ import os
 import sys
 import subprocess
 import argparse
+import tempfile
+import tarfile
+
 from datetime import datetime
 from ftplib import FTP, error_perm
 TOP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -98,7 +101,7 @@ def run_script(args):
 script_start_time = None
 script_end_time = None
 
-def get_script_build_platform(directory = OUTPUT_DIR):
+def get_script_build_info(directory = OUTPUT_DIR):
     modified_config_files = []
     
     for root, dirs, files in os.walk(directory):
@@ -113,11 +116,17 @@ def get_script_build_platform(directory = OUTPUT_DIR):
     
     print(f"modified_config_files = {modified_config_files}")    
     
-    #check file 包括目录docker
+    
+    build_info = {'start': script_start_time.strftime("%Y-%m-%d %H:%M:%S"), 
+                  'end': script_end_time.strftime("%Y-%m-%d %H:%M:%S"), 'build_dirs': []}
     for file in modified_config_files:
+        #check file 包括目录docker
         if file.find('docker') == -1:
             raise ValueError(f"docker build failed, no need upload ftp")
-    pass
+        build_info['build_dirs'].append(os.path.dirname(file))
+    
+    return build_info
+    
 
 
 
@@ -153,11 +162,32 @@ BT_FTP = { 'url': "192.168.14.107",
 }    
 
 def upload_ftp(ftp_dir):
+    build_info = get_script_build_info()
+    if build_info.get('build_dirs') is None:
+        return
+    
+    # for build_path in build_info['build_dirs']:
+    #     print(build_path)
+    
     uploader = FTPUploader(BT_FTP)
     try:
         uploader.connect()
         uploader.create_or_clear_directory(ftp_dir)
-        uploader.upload_file('/home/gupeng/github/qemu_builds/tools/docker/Dockerfile', 'Dockerfile')
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # 临时目录下创建build_info.txt
+            build_info_file = os.path.join(temp_dir, 'build_info.txt')
+            with open(build_info_file, 'w') as f:
+                f.write(str(build_info))
+            pass
+            # 遍历临时目录下所有文件，上传到ftp服务器
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    local_path = os.path.join(root, file)
+                    remote_name = os.path.relpath(local_path, temp_dir)
+                    uploader.upload_file(local_path, remote_name)
+                    pass
+                pass
+        # uploader.upload_file('/home/gupeng/github/qemu_builds/tools/docker/Dockerfile', 'Dockerfile')
     except (error_perm, Exception) as e:
         print(f"An error occurred: {e}")
     finally:
@@ -165,7 +195,7 @@ def upload_ftp(ftp_dir):
 
 
 # def upload_ftp(ftp_dir):
-#     # get_script_build_platform()
+    # get_script_build_info()
     
     
 #     # 连接到ftp服务器
@@ -203,7 +233,7 @@ if __name__ == '__main__':
     
     try:
         script_start_time = datetime.now()
-        # run_script(args)
+        run_script(args)
         script_end_time = datetime.now()
         upload_ftp(args.ftp)
     except Exception as e:
