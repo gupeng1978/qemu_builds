@@ -10,8 +10,40 @@ from ftplib import FTP, error_perm
 TOP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOCKER_TOP_DIR = "/home/intellif/qemu_builds"
 OUTPUT_DIR = os.path.join(TOP_DIR, 'output')
+script_start_time = None
+script_end_time = None
+
+BT_FTP = { 'url': "192.168.14.107",
+        'user': "intellif_build",
+        'passwd': "123456",
+        'top_dir': 'relay_build',
+}    
 
 
+class FTPUploader:
+    def __init__(self, config):
+        self.config = config
+        self.ftp = FTP()
+
+    def connect(self):
+        self.ftp.connect(self.config['url'], 21)
+        self.ftp.login(self.config['user'], self.config['passwd'])
+        self.ftp.set_pasv(False)
+        self.ftp.cwd(self.config['top_dir'])
+
+    def create_or_clear_directory(self, directory):
+        if directory not in self.ftp.nlst():
+            self.ftp.mkd(directory)
+        self.ftp.cwd(directory)
+        for file in self.ftp.nlst():
+            self.ftp.delete(file)
+
+    def upload_file(self, local_path, remote_name):
+        with open(local_path, 'rb') as file:
+            self.ftp.storbinary(f'STOR {remote_name}', file)
+
+    def quit(self):
+        self.ftp.quit()
 
     
 
@@ -98,144 +130,88 @@ def run_script(args):
     
     pass
 
-script_start_time = None
-script_end_time = None
 
-def get_script_build_info(directory = OUTPUT_DIR):
-    modified_config_files = []
-    
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file == '.config':
-                file_path = os.path.join(root, file)
-                mtime = os.path.getmtime(file_path)
-                last_modified_date = datetime.fromtimestamp(mtime)
-                if script_start_time <= last_modified_date <= script_end_time:
-                    modified_config_files.append(file_path)
-        pass
-    
-    print(f"modified_config_files = {modified_config_files}")    
-    
-    
+
+def get_script_build_info(directory = OUTPUT_DIR, check_time = False):
     build_info = {'start': script_start_time.strftime("%Y-%m-%d %H:%M:%S"), 
                   'end': script_end_time.strftime("%Y-%m-%d %H:%M:%S"), 'build_dirs': []}
-    for file in modified_config_files:
-        #check file 包括目录docker
-        if file.find('docker') == -1:
-            raise ValueError(f"docker build failed, no need upload ftp")
-        build_info['build_dirs'].append(os.path.dirname(file))
     
+    for root, dirs, files in os.walk(directory):
+        if 'docker' in dirs:
+            docker_relpath = os.path.relpath(os.path.join(root, 'docker'), OUTPUT_DIR)
+            # 获取docker_relpath目录下的.config文件
+            config_file = os.path.join(root, 'docker', '.config')
+            if os.path.exists(config_file):
+                if check_time:
+                    mtime = os.path.getmtime(config_file)
+                    last_modified_date = datetime.fromtimestamp(mtime)
+                    if script_start_time <= last_modified_date <= script_end_time:
+                        build_info['build_dirs'].append(docker_relpath)
+                else:
+                    build_info['build_dirs'].append(docker_relpath)
+    # print(f"build_dirs = {build_info['build_dirs']}")    
     return build_info
     
 
-
-
-class FTPUploader:
-    def __init__(self, config):
-        self.config = config
-        self.ftp = FTP()
-
-    def connect(self):
-        self.ftp.connect(self.config['url'], 21)
-        self.ftp.login(self.config['user'], self.config['passwd'])
-        self.ftp.set_pasv(False)
-        self.ftp.cwd(self.config['top_dir'])
-
-    def create_or_clear_directory(self, directory):
-        if directory not in self.ftp.nlst():
-            self.ftp.mkd(directory)
-        self.ftp.cwd(directory)
-        for file in self.ftp.nlst():
-            self.ftp.delete(file)
-
-    def upload_file(self, local_path, remote_name):
-        with open(local_path, 'rb') as file:
-            self.ftp.storbinary(f'STOR {remote_name}', file)
-
-    def quit(self):
-        self.ftp.quit()
-
-BT_FTP = { 'url': "192.168.14.107",
-        'user': "intellif_build",
-        'passwd': "123456",
-        'top_dir': 'relay_build',
-}    
-
 def upload_ftp(ftp_dir):
-    build_info = get_script_build_info()
+    build_info = get_script_build_info(check_time=False)
     if build_info.get('build_dirs') is None:
         return
     
     # for build_path in build_info['build_dirs']:
     #     print(build_path)
     
-    uploader = FTPUploader(BT_FTP)
-    try:
-        uploader.connect()
-        uploader.create_or_clear_directory(ftp_dir)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # 临时目录下创建build_info.txt
-            build_info_file = os.path.join(temp_dir, 'build_info.txt')
-            with open(build_info_file, 'w') as f:
-                f.write(str(build_info))
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # 临时目录下创建build_info.txt
+        build_info_file = os.path.join(temp_dir, 'build_info.txt')
+        with open(build_info_file, 'w') as f:
+            f.write(str(build_info))
+        pass
+    
+        # 遍历build_info['build_dirs']，将目录下所有文件夹压缩为tar.gz文件，保存到临时目录            
+        tar_cmd = f"tar -czvf {os.path.join(temp_dir, 'output.tar.gz')} "
+        for build_path in build_info['build_dirs']:
+            tar_cmd += f"{build_path}"
             pass
-            # 遍历临时目录下所有文件，上传到ftp服务器
+        
+        if run_shell_cmd(tar_cmd, os.environ, OUTPUT_DIR).returncode != 0:
+            raise ValueError(f"tar {build_info['build_dirs']} failed")
+        
+        
+        # 上传到ftp服务器
+        uploader = FTPUploader(BT_FTP)
+        try:
+            uploader.connect()
+            uploader.create_or_clear_directory(ftp_dir)
+             # 遍历临时目录下所有文件，上传到ftp服务器
             for root, dirs, files in os.walk(temp_dir):
                 for file in files:
                     local_path = os.path.join(root, file)
                     remote_name = os.path.relpath(local_path, temp_dir)
                     uploader.upload_file(local_path, remote_name)
-                    pass
-                pass
-        # uploader.upload_file('/home/gupeng/github/qemu_builds/tools/docker/Dockerfile', 'Dockerfile')
-    except (error_perm, Exception) as e:
-        print(f"An error occurred: {e}")
-    finally:
-        uploader.quit()
-
-
-# def upload_ftp(ftp_dir):
-    # get_script_build_info()
+                    
+        except (error_perm, Exception) as e:
+            print(f"An error occurred in upload_ftp: {e}")
+        finally:
+            uploader.quit()
+            
     
-    
-#     # 连接到ftp服务器
-#     ftp = FTP()
-#     ftp.connect(BT_FTP['url'], 21)
-#     ftp.login(BT_FTP['user'], BT_FTP['passwd'])
-#     ftp.set_pasv(False)
-#     ftp.cwd(BT_FTP['top_dir'])
-    
-    
-#     #创建目录，如果目录存在则清空目录内容
-#     # check ftp_dir是否存在
-#     if ftp_dir not in ftp.nlst():
-#         ftp.mkd(ftp_dir)
-#     ftp.cwd(ftp_dir)
-#     for file in ftp.nlst():
-#         ftp.delete(file)
-    
-    
-#     # 上传文件/home/gupeng/github/qemu_builds/tools/docker/Dockerfile到ftp服务器
-#     ftp.storbinary('STOR Dockerfile', open('/home/gupeng/github/qemu_builds/tools/docker/Dockerfile', 'rb'))
-    
-#     ftp.quit()    
-#     pass
-
 
 if __name__ == '__main__':
-    # 解析命令行参数
     parser = argparse.ArgumentParser(description='Run a Python script in a Docker container')
     parser.add_argument('--image', required=True, help='Docker image name')
     parser.add_argument('--script', required=True, help='Python script name')
     parser.add_argument('--sudo_passwd', required=True, help='sudo password')
-    parser.add_argument('--ftp', required=False, help='build ftp upload dir')
+    parser.add_argument('--ftp_upload', required=False, help='build ftp upload dir')
+    parser.add_argument('--with_relay', required=False, help='build with relay from ftp')
+    parser.add_argument('--pre_dl', required=False, help='build with bt2 dl cache')
     args = parser.parse_args()
     
     try:
         script_start_time = datetime.now()
         run_script(args)
         script_end_time = datetime.now()
-        upload_ftp(args.ftp)
+        upload_ftp(args.ftp_upload)
     except Exception as e:
         # 在异常发生时执行额外的操作
         print(f"An error occurred: {e}")
